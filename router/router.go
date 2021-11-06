@@ -1,6 +1,10 @@
 package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"MyGram/controller"
+
+	"github.com/gin-gonic/gin"
+)
 
 func MainRouter() *gin.Engine {
 
@@ -8,8 +12,8 @@ func MainRouter() *gin.Engine {
 
 	userRouter := r.Group("/users")
 	{
-		userRouter.POST("/login")
-		userRouter.POST("/register")
+		userRouter.POST("/login", controller.Login)
+		userRouter.POST("/register", controller.Register)
 		userRouter.PUT("/")
 		userRouter.DELETE("/")
 	}
