@@ -77,6 +77,11 @@ func Login(c *gin.Context) {
 	var user model.User
 	var db = database.GetDB()
 
+	var loginResponse struct{
+		ID uuid.UUID `json:"id"`
+		Email string `json:"email"`
+	}
+
 	contentType := helper.GetContentType(c)
 	if contentType == json {
 		err = c.ShouldBindJSON(&user)
@@ -117,8 +122,20 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	token, err := helper.GenerateToken(user.ID, user.UserName, user.Email, user.Age)
+	if err != nil {
+		 c.JSON(http.StatusBadRequest, gin.H{
+			 "message": "Error login",
+		 })
+		return
+	}
+
+	loginResponse.ID = user.ID
+	loginResponse.Email = user.Email
 	c.JSON(http.StatusOK, gin.H{
 		"success": "Login success",
+		"token": token,
+		"user": loginResponse,
 	})
 
 }
