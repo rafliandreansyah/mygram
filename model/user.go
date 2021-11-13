@@ -10,7 +10,7 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey" valid:"required~ID is empty" json:"id" form:"id"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id" form:"id"`
 	UserName  string    `gorm:"not null;unique" valid:"required~Username is blank" json:"username" form:"username"`
 	Email     string    `gorm:"not null;unique" valid:"required~Email is blank,email~Invalid email format" json:"email" form:"email"`
 	Password  string    `gorm:"not null" valid:"required~Password is blank,minstringlength(8)~Password must have 8 character or more" json:"password" form:"password"`

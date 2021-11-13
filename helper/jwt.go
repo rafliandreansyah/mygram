@@ -34,12 +34,12 @@ func GenerateToken(id uuid.UUID, username string, email string, age int) (string
 }
 
 func VerifyToken(c *gin.Context)(interface{}, error){
-	err := errors.New("Unexpected signing method")
+	errAuthorization := errors.New("not authenticated")
 	headerToken := c.Request.Header.Get("Authorization")
 	hasBearer := strings.HasPrefix(headerToken, "Bearer")
 
 	if !hasBearer {
-		return nil, err
+		return nil, errAuthorization
 	}
 
 	tokenString := strings.Split(headerToken, " ")[1]
@@ -47,20 +47,20 @@ func VerifyToken(c *gin.Context)(interface{}, error){
 
 	token, err:= jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, err
+			return nil, errAuthorization
 		}
 
 		return []byte(secretKey), nil
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errAuthorization
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	}else {
-		return nil, err
+		return nil, errAuthorization
 	}
 
 

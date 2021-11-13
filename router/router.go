@@ -21,7 +21,7 @@ func MainRouter() *gin.Engine {
 
 	photosRouter := r.Group("/photos")
 	{
-		photosRouter.POST("/")
+		photosRouter.POST("/",middleware.Authentication(), controller.AddPhoto)
 		photosRouter.GET("/",middleware.Authentication() , controller.GetPhotos)
 		photosRouter.GET("/:photo_id")
 		photosRouter.PUT("/:photo_id")

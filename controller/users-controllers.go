@@ -5,6 +5,7 @@ import (
 	"MyGram/helper"
 	"MyGram/model"
 	"fmt"
+	"github.com/asaskevich/govalidator"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,6 +37,14 @@ func Register(c *gin.Context) {
 			fmt.Println(err.Error())
 			return
 		}
+	}
+
+	_, err = govalidator.ValidateStruct(user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
 	}
 
 	//Check age
@@ -107,6 +116,8 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+
+
 
 	// Check password is match
 	isMatch := helper.CompareHashPassword(user.Password, password)
