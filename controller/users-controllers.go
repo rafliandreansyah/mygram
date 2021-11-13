@@ -11,13 +11,8 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-var (
-	json = "application/json"
-	err error
-)
-
 func Register(c *gin.Context) {
-
+	var err error
 	var user model.User
 	var responseRegister struct {
 		ID    uuid.UUID `json:"id"`
@@ -28,7 +23,7 @@ func Register(c *gin.Context) {
 	contentType := helper.GetContentType(c)
 
 	//Check content type
-	if contentType == json {
+	if contentType == helper.JSON {
 		//Bind from json to struct
 		err = c.ShouldBindJSON(&user)
 		if err != nil {
@@ -73,7 +68,7 @@ func Register(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-
+	var err error
 	var user model.User
 	var db = database.GetDB()
 
@@ -83,7 +78,7 @@ func Login(c *gin.Context) {
 	}
 
 	contentType := helper.GetContentType(c)
-	if contentType == json {
+	if contentType == helper.JSON {
 		err = c.ShouldBindJSON(&user)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
