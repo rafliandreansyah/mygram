@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"MyGram/constant"
 	"MyGram/helper"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -16,7 +17,7 @@ func Authentication() gin.HandlerFunc{
 			return
 		}
 
-		c.Set("userData", verifyToken)
+		c.Set(constant.UserData, verifyToken)
 		c.Next()
 	}
 }

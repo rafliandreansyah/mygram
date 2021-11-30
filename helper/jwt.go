@@ -20,6 +20,7 @@ func GenerateToken(id uuid.UUID, username string, email string, age int) (string
 		"email": email,
 		"age": strconv.Itoa(age),
 		"time": time.Now(),
+		"exp": time.Now().Add(time.Hour * 72).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
@@ -54,7 +55,7 @@ func VerifyToken(c *gin.Context)(interface{}, error){
 	})
 
 	if err != nil {
-		return nil, errAuthorization
+		return nil, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
