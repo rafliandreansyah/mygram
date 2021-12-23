@@ -30,7 +30,7 @@ func MainRouter() *gin.Engine {
 
 	commentsRouter := r.Group("/comments")
 	{
-		commentsRouter.POST("/")
+		commentsRouter.POST("/", middleware.Authentication(), controller.CreateComment)
 		commentsRouter.GET("/")
 		commentsRouter.PUT("/:comment_id")
 		commentsRouter.DELETE("/:comment_id")
