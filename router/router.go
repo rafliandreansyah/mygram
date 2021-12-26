@@ -39,7 +39,7 @@ func MainRouter() *gin.Engine {
 	socialMediasRouter := r.Group("/socialmedias")
 	{
 		socialMediasRouter.POST("/", middleware.Authentication(), controller.PostSocialMedia)
-		socialMediasRouter.GET("/")
+		socialMediasRouter.GET("/", middleware.Authentication(), controller.GetSocialMedias)
 		socialMediasRouter.PUT("/:socialmedia_id")
 		socialMediasRouter.DELETE("/:socialmedia_id")
 	}

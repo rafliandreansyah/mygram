@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	uuid "github.com/satori/go.uuid"
+	"gorm.io/gorm/clause"
 	"net/http"
 	"time"
 )
@@ -64,6 +65,47 @@ func CreateComment(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"Data": createCommentReponse,
+	})
+
+}
+
+func GetSocialMedias(c *gin.Context) {
+
+	type User struct {
+		ID       uuid.UUID `json:"id"`
+		UserName string    `json:"user_name"`
+		Email    string    `json:"email"`
+	}
+
+	type SocialMedia struct {
+		ID             uuid.UUID `json:"id"`
+		Name           string    `json:"name"`
+		SocialMediaUrl string    `json:"social_media_url"`
+		User           User      `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" valid:"-"`
+		UserID         uuid.UUID `json:"user_id" form:"user_id"`
+		CreatedAt      time.Time `json:"created_at" form:"created_at"`
+	}
+
+	var socialMediasResponse struct {
+		SocialMedia []SocialMedia `json:"social_media"`
+	}
+	var err error
+	var socialMedia []SocialMedia
+
+	db := database.GetDB()
+
+	err = db.Debug().Preload(clause.Associations).Find(&socialMedia).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	socialMediasResponse.SocialMedia = socialMedia
+
+	c.JSON(http.StatusOK, gin.H{
+		"Data": socialMediasResponse,
 	})
 
 }
