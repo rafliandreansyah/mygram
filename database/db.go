@@ -30,7 +30,7 @@ func StartDB() {
 		log.Fatal("Error connecting database =>", err)
 	}
 
-	err = db.AutoMigrate(&model.User{}, &model.Photo{}, &model.Comment{})
+	err = db.AutoMigrate(&model.User{}, &model.Photo{}, &model.Comment{}, model.SocialMedia{})
 	if err != nil {
 		log.Fatal("err:", err.Error())
 		return
