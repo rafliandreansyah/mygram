@@ -109,3 +109,31 @@ func GetSocialMedias(c *gin.Context) {
 	})
 
 }
+
+func DeleteSocialMediaByID(c *gin.Context){
+
+	var err error
+
+	db := database.GetDB()
+	socialMediaIdParams := c.Param("socialmedia_id")
+
+	found := db.Debug().First(&model.SocialMedia{ID: uuid.Must(uuid.FromString(socialMediaIdParams))}).RowsAffected
+	if found < 1 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "social media not found",
+		})
+		return
+	}
+
+	err = db.Debug().Delete(&model.SocialMedia{ID: uuid.Must(uuid.FromString(socialMediaIdParams))}).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "delete success",
+	})
+}
