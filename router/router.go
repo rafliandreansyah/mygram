@@ -32,15 +32,15 @@ func MainRouter() *gin.Engine {
 	{
 		commentsRouter.POST("/", middleware.Authentication(), controller.CreateComment)
 		commentsRouter.GET("/")
-		commentsRouter.PUT("/:comment_id")
-		commentsRouter.DELETE("/:comment_id")
+		commentsRouter.PUT("/:comment_id", middleware.Authentication(), controller.EditCommentByID)
+		commentsRouter.DELETE("/:comment_id", middleware.Authentication(), controller.DeleteCommentByID)
 	}
 
 	socialMediasRouter := r.Group("/socialmedias")
 	{
 		socialMediasRouter.POST("/", middleware.Authentication(), controller.PostSocialMedia)
 		socialMediasRouter.GET("/", middleware.Authentication(), controller.GetSocialMedias)
-		socialMediasRouter.PUT("/:socialmedia_id")
+		socialMediasRouter.PUT("/:socialmedia_id", middleware.Authentication(), controller.EditSocialMediaByID)
 		socialMediasRouter.DELETE("/:socialmedia_id", middleware.Authentication(), controller.DeleteSocialMediaByID)
 	}
 
