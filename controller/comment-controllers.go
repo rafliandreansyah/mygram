@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	uuid "github.com/satori/go.uuid"
-	"gorm.io/gorm/clause"
 	"net/http"
 	"time"
 )
@@ -16,7 +15,7 @@ import (
 func CreateComment(c *gin.Context) {
 	var err error
 	var comment model.Comment
-	var createCommentReponse struct {
+	var createCommentResponse struct {
 		ID        uuid.UUID `json:"id"`
 		Message   string    `json:"message"`
 		PhotoID   uuid.UUID `json:"photo_id"`
@@ -57,83 +56,117 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
-	createCommentReponse.ID = comment.ID
-	createCommentReponse.Message = comment.Message
-	createCommentReponse.UserID = comment.UserID
-	createCommentReponse.PhotoID = comment.PhotoID
-	createCommentReponse.CreatedAt = comment.CreatedAt
+	createCommentResponse.ID = comment.ID
+	createCommentResponse.Message = comment.Message
+	createCommentResponse.UserID = comment.UserID
+	createCommentResponse.PhotoID = comment.PhotoID
+	createCommentResponse.CreatedAt = comment.CreatedAt
 
 	c.JSON(http.StatusCreated, gin.H{
-		"Data": createCommentReponse,
+		"Data": createCommentResponse,
 	})
 
 }
 
-func GetSocialMedias(c *gin.Context) {
-
-	type User struct {
-		ID       uuid.UUID `json:"id"`
-		UserName string    `json:"user_name"`
-		Email    string    `json:"email"`
-	}
-
-	type SocialMedia struct {
-		ID             uuid.UUID `json:"id"`
-		Name           string    `json:"name"`
-		SocialMediaUrl string    `json:"social_media_url"`
-		User           User      `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" valid:"-"`
-		UserID         uuid.UUID `json:"user_id" form:"user_id"`
-		CreatedAt      time.Time `json:"created_at" form:"created_at"`
-	}
-
-	var socialMediasResponse struct {
-		SocialMedia []SocialMedia `json:"social_media"`
-	}
+func EditCommentByID(c *gin.Context) {
 	var err error
-	var socialMedia []SocialMedia
+	var comment model.Comment
+	var commentEdit model.Comment
+	var commentResponse struct {
+		ID        uuid.UUID `json:"id"`
+		Message   string    `json:"message"`
+		PhotoID   uuid.UUID `json:"photo_id"`
+		UserID    uuid.UUID `json:"user_id"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
 
 	db := database.GetDB()
 
-	err = db.Debug().Preload(clause.Associations).Find(&socialMedia).Error
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
+	commentID := c.Param("comment_id")
+	contentType := helper.GetContentType(c)
+
+	//Check content type
+	if contentType == constant.JSON {
+		err = c.BindJSON(&comment)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "bad request",
+			})
+			return
+		}
+	} else {
+		err = c.Bind(&comment)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "bad request",
+			})
+			return
+		}
 	}
 
-	socialMediasResponse.SocialMedia = socialMedia
+	//Check comment found and get data
+	commentEdit.ID = uuid.Must(uuid.FromString(commentID))
+	commentData := db.Debug().First(&commentEdit).RowsAffected
 
-	c.JSON(http.StatusOK, gin.H{
-		"Data": socialMediasResponse,
-	})
-
-}
-
-func DeleteSocialMediaByID(c *gin.Context){
-
-	var err error
-
-	db := database.GetDB()
-	socialMediaIdParams := c.Param("socialmedia_id")
-
-	found := db.Debug().First(&model.SocialMedia{ID: uuid.Must(uuid.FromString(socialMediaIdParams))}).RowsAffected
-	if found < 1 {
+	if commentData < 1 {
 		c.JSON(http.StatusNotFound, gin.H{
-			"message": "social media not found",
+			"message": "comment not found",
 		})
 		return
 	}
 
-	err = db.Debug().Delete(&model.SocialMedia{ID: uuid.Must(uuid.FromString(socialMediaIdParams))}).Error
+	//Edit comment
+	commentEdit.Message = comment.Message
+	err = db.Save(&commentEdit).Error
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	commentResponse.ID = commentEdit.ID
+	commentResponse.Message = commentEdit.Message
+	commentResponse.PhotoID = commentEdit.PhotoID
+	commentResponse.UserID = commentEdit.UserID
+	commentResponse.UpdatedAt = commentEdit.UpdatedAt
+	c.JSON(http.StatusOK, gin.H{
+		"Data": commentResponse,
+	})
+
+}
+
+func DeleteCommentByID(c *gin.Context) {
+	var err error
+
+	id := c.Param("comment_id")
+	db := database.GetDB()
+
+	// Check comment
+	comment := db.Debug().First(&model.Comment{
+		ID: uuid.Must(uuid.FromString(id)),
+	}).RowsAffected
+	if comment < 1 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "comment not found",
+		})
+		return
+	}
+
+	//Delete comment
+	err = db.Debug().Delete(&model.Comment{
+		ID: uuid.Must(uuid.FromString(id)),
+	}).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "delete success",
+		"message": "comment deleted",
 	})
+
 }
