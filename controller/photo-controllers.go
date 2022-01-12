@@ -15,10 +15,10 @@ import (
 
 func GetPhotos(c *gin.Context) {
 	type Comment struct {
-		ID uuid.UUID `json:"id"`
-		Message string `json:"message"`
-		UserID uuid.UUID `json:"user_id"`
-		PhotoID uuid.UUID `json:"-"`
+		ID        uuid.UUID `json:"id"`
+		Message   string    `json:"message"`
+		UserID    uuid.UUID `json:"user_id"`
+		PhotoID   uuid.UUID `json:"-"`
 		CreatedAt time.Time `json:"created_at"`
 	}
 	type Photo struct {
@@ -27,14 +27,13 @@ func GetPhotos(c *gin.Context) {
 		Caption   string    `json:"caption"`
 		PhotoUrl  string    `json:"photo_url"`
 		CreatedAt time.Time `json:"created_at"`
-		Comments []Comment `json:"comments"`
+		Comments  []Comment `json:"comments"`
 	}
 
 	var err error
 	var photos []Photo
 
 	getDB := database.GetDB()
-
 
 	//Get all photo
 	err = getDB.Debug().Preload("Comments").Find(&photos).Error
@@ -114,7 +113,53 @@ func AddPhoto(c *gin.Context) {
 	photoResponse.UserID = photo.UserID
 	photoResponse.CreatedAt = photo.CreatedAt
 	c.JSON(http.StatusCreated, gin.H{
-		"Data":   photoResponse,
+		"Data": photoResponse,
 	})
 
+}
+
+func GetPhotoByID(c *gin.Context) {
+	type User struct {
+		ID       uuid.UUID `json:"id"`
+		UserName string    `json:"user_name"`
+		Email    string    `json:"email"`
+	}
+
+	type Comment struct {
+		ID        uuid.UUID `json:"id"`
+		Message   string    `json:"message"`
+		UserID    uuid.UUID `json:"user_id"`
+		PhotoID   uuid.UUID `json:"-"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+
+	type Photo struct {
+		ID        uuid.UUID `json:"id"`
+		Title     string    `json:"title"`
+		Caption   string    `json:"caption"`
+		PhotoUrl  string    `json:"photo_url"`
+		CreatedAt time.Time `json:"created_at"`
+		UserID    uuid.UUID `json:"-"`
+		User      User      `json:"user"`
+		Comments  []Comment `json:"comments"`
+	}
+
+	var err error
+	var photo Photo
+
+	id := c.Param("photo_id")
+	photoID := uuid.Must(uuid.FromString(id))
+	db := database.GetDB()
+
+	err = db.Debug().Preload("Comments").Preload("User").Find(&photo, photoID).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Data": photo,
+	})
 }
