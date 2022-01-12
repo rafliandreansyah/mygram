@@ -12,6 +12,41 @@ import (
 	"time"
 )
 
+func GetComment(c *gin.Context) {
+	type Photo struct {
+		ID       uuid.UUID `json:"id"`
+		Title    string    `json:"title"`
+		Caption  string    `json:"caption"`
+		PhotoUrl string    `json:"photo_url"`
+		UserID   uuid.UUID `json:"user_id"`
+	}
+	type Comment struct {
+		ID        uuid.UUID   `json:"id"`
+		Message   string      `json:"message"`
+		PhotoID   uuid.UUID   `json:"photo_id"`
+		UpdatedAt time.Time   `json:"updated_at"`
+		CreatedAt time.Time   `json:"created_at"`
+		Photo     Photo `json:"photo"`
+	}
+	var err error
+	var comments []Comment
+
+	db := database.GetDB()
+
+	err = db.Debug().Preload("Photo").Find(&comments).Error
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Data": comments,
+	})
+
+}
+
 func CreateComment(c *gin.Context) {
 	var err error
 	var comment model.Comment
