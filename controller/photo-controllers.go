@@ -14,64 +14,40 @@ import (
 )
 
 func GetPhotos(c *gin.Context) {
-	type photoResponse struct {
+	type Comment struct {
+		ID uuid.UUID `json:"id"`
+		Message string `json:"message"`
+		UserID uuid.UUID `json:"user_id"`
+		PhotoID uuid.UUID `json:"-"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+	type Photo struct {
 		ID        uuid.UUID `json:"id"`
 		Title     string    `json:"title"`
 		Caption   string    `json:"caption"`
 		PhotoUrl  string    `json:"photo_url"`
 		CreatedAt time.Time `json:"created_at"`
+		Comments []Comment `json:"comments"`
 	}
 
 	var err error
-	var photos []model.Photo
-	var user model.User
-	var listPhotoResponse []photoResponse
+	var photos []Photo
 
 	getDB := database.GetDB()
-	userData := c.MustGet(constant.UserData).(jwt.MapClaims)
 
-	//Check content type
-	contentType := helper.GetContentType(c)
-	if contentType == constant.JSON {
-		c.ShouldBindJSON(&photos)
-	} else {
-		c.ShouldBind(&photos)
-	}
-
-	//Check user found
-	userId := uuid.Must(uuid.FromString(userData["id"].(string)))
-	rowAffected := getDB.First(&user, userId).RowsAffected
-	if rowAffected < 1 {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "not authenticated",
-		})
-		return
-	}
 
 	//Get all photo
-	err = getDB.Debug().Find(&photos).Error
+	err = getDB.Debug().Preload("Comments").Find(&photos).Error
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "error get data",
-			"error":   err.Error(),
+			"message": err.Error(),
 		})
 		return
-	}
-
-	for _, value := range photos {
-		data := photoResponse{
-			ID:        value.ID,
-			Title:     value.Title,
-			Caption:   value.Caption,
-			CreatedAt: value.CreatedAt,
-			PhotoUrl:  value.PhotoUrl,
-		}
-		listPhotoResponse = append(listPhotoResponse, data)
 	}
 
 	//return all photo
 	c.JSON(http.StatusOK, gin.H{
-		"Data": listPhotoResponse,
+		"Data": photos,
 	})
 
 }
