@@ -163,3 +163,33 @@ func GetPhotoByID(c *gin.Context) {
 		"Data": photo,
 	})
 }
+
+func DeletePhotoByID(c *gin.Context){
+	var err error
+	var photo model.Photo
+
+	id := c.Param("photo_id")
+	photoID := uuid.Must(uuid.FromString(id))
+
+	db := database.GetDB()
+
+	data := db.Debug().First(&photo, photoID).RowsAffected
+	if data < 1 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "photo not found",
+		})
+		return
+	}
+
+	err = db.Debug().Delete(&photo, photoID).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "delete photo success",
+	})
+}
