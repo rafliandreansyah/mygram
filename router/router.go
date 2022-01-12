@@ -24,7 +24,7 @@ func MainRouter() *gin.Engine {
 		photosRouter.POST("/",middleware.Authentication(), controller.AddPhoto)
 		photosRouter.GET("/",middleware.Authentication() , controller.GetPhotos)
 		photosRouter.GET("/:photo_id", middleware.Authentication(), controller.GetPhotoByID)
-		photosRouter.PUT("/:photo_id")
+		photosRouter.PUT("/:photo_id", middleware.Authentication(), controller.EditPhotoByID)
 		photosRouter.DELETE("/:photo_id", middleware.Authentication(), controller.DeletePhotoByID)
 	}
 

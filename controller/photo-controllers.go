@@ -164,7 +164,75 @@ func GetPhotoByID(c *gin.Context) {
 	})
 }
 
-func DeletePhotoByID(c *gin.Context){
+func EditPhotoByID(c *gin.Context) {
+	var err error
+	var photo model.Photo
+	var photoEdited model.Photo
+	var photoResponse struct {
+		ID        uuid.UUID `json:"id"`
+		Title     string    `json:"title"`
+		Caption   string    `json:"caption"`
+		PhotoUrl  string    `json:"photo_url"`
+		UserID    uuid.UUID `json:"user_id"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
+
+	contentType := helper.GetContentType(c)
+	if contentType == constant.JSON {
+		err = c.BindJSON(&photoEdited)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+	} else {
+		err = c.Bind(&photoEdited)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+	}
+
+	id := c.Param("photo_id")
+	photoID := uuid.Must(uuid.FromString(id))
+	db := database.GetDB()
+
+	data := db.Debug().First(&photo, photoID).RowsAffected
+	if data < 1 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "photo not found",
+		})
+		return
+	}
+
+	photo.Title = photoEdited.Title
+	photo.Caption = photoEdited.Caption
+	photo.PhotoUrl = photoEdited.PhotoUrl
+	err = db.Save(&photo).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	photoResponse.ID = photo.ID
+	photoResponse.Title = photo.Title
+	photoResponse.Caption = photo.Caption
+	photoResponse.PhotoUrl = photo.PhotoUrl
+	photoResponse.UserID = photo.UserID
+	photoResponse.UpdatedAt = photo.UpdatedAt
+
+	c.JSON(http.StatusOK, gin.H{
+		"Data": photoResponse,
+	})
+
+}
+
+func DeletePhotoByID(c *gin.Context) {
 	var err error
 	var photo model.Photo
 
